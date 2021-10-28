@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-notification-worker-deployment
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+  labels:
+    app: celery-notification-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-notification-worker
+  template:
+    metadata:
+      labels:
+        app: celery-notification-worker
+    spec:
+      containers:
+      - name: celery-notification-worker
+        image: {{.Values.deployment.celeryNotificationWorker.image}}:{{.Values.deployment.celeryNotificationWorker.version}}
+        {{if .Values.deployment.celeryHighWorker.command}}
+        command: {{.Values.deployment.celeryNotificationWorker.command }}
+        {{end}}
+        imagePullPolicy: {{.Values.imagePullPolicy | quote}}
+        

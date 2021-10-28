@@ -1,0 +1,62 @@
+namespace: "atronas-test"
+imagePullPolicy: Never
+
+deployment:
+  laravel:
+    image: surt-laravel-prod
+    version: v1.0.0
+  mysql:
+    image: surt-mysql-prod
+    version: v1.0.0
+    password: Jegloberhurtig1
+    PersistentVolume:
+      storage: 5Gi
+      path: /mnt/data/mysql
+    PersistentVolumeClaim:
+      storage: 2Gi
+  flask:
+    image: surt-flask-prod
+    version: v1.0.0
+  redis:
+    image: surt-redis-prod
+    version: v1.0.0
+    PersistentVolume:
+      storage: 1Gi
+      path: /mnt/data/redis
+    PersistentVolumeClaim:
+      storage: 1Gi
+  dkron:
+    PersistentVolume:
+      storage: 1Gi
+      path: /mnt/data/dkron
+    PersistentVolumeClaim:
+      storage: 1Gi
+    image: surt-dkron-prod
+    version: v1.0.0
+
+  celeryBeat:
+    image: surt-celery-beat-prod
+    version: v1.0.0
+    
+  celeryNotificationWorker:
+    image: surt-celery-notification-worker-prod
+    version: v1.0.0
+    
+  celeryCleaner:
+    image: surt-celery-cleaner-worker-prod
+    version: v1.0.0
+    
+  celeryDefaultWorker:
+    image: surt-celery-default-worker-prod
+    version: v1.0.0
+    
+  celeryHighWorker:
+    image: surt-celery-high-worker-prod
+    version: v1.0.0
+    
+  sapConnector:
+    image: surt-sap-connector-prod
+    version: v1.0.0
+    nodeKey: nodeType
+    nodeValue: sapConnector
+    

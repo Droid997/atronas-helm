@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dkron-pv-volume
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+  labels:
+    type: local
+spec:
+  {{- with .Values.deployment.mysql.PersistentVolume}}
+  {{if .storageClassName}}
+  # takes default storage class if not specifed, Make Sure you select default storage class
+  storageClassName: {{.storageClassName}}
+  {{end}}
+  capacity:
+    storage: {{.storage}}
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: {{.path}}
+  {{- end }}
+  
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dkron-pv-claim
+  namespace:  {{.Values.namespace | default "atronas-app" | quote }}
+spec:
+  {{- with .Values.deployment.redis.PersistentVolumeClaim}}
+  {{if .storageClassName}}
+  # takes default storage class if not specifed, Make Sure you select default storage class
+  storageClassName: {{.storageClassName}}
+  {{end}}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{.storage}}
+  {{- end}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dkron-service
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+spec:
+  selector:
+    app: dkron
+  ports:
+    - name: 8080port
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+    - name: 8946port
+      protocol: TCP
+      port: 8946
+      targetPort: 8946
+--- 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dkron-deployment
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+spec:
+  selector:
+    matchLabels:
+      app: dkron
+  replicas: 1 
+  template:
+    metadata:
+      labels:
+        app: dkron
+    spec:
+      containers:
+      - name: dkron
+        image: {{.Values.deployment.dkron.image}}:{{.Values.deployment.dkron.version}}
+        imagePullPolicy: {{.Values.imagePullPolicy | quote}}
+        ports:
+        - containerPort: 8080
+        - containerPort: 8946
+        volumeMounts:
+        - name: dkron-persistent-storage
+          mountPath: /dkron.data
+      volumes:
+      - name: dkron-persistent-storage
+        persistentVolumeClaim:
+          claimName: dkron-pv-claim

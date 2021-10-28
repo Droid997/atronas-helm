@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-beat-deployment
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+  labels:
+    app: celery-beat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-beat
+  template:
+    metadata:
+      labels:
+        app: celery-beat
+    spec:
+      containers:
+      - name: celery-beat
+        image: {{.Values.deployment.celeryBeat.image}}:{{.Values.deployment.celeryBeat.version}}
+        {{if .Values.deployment.celeryBeat.command}}
+        command: {{.Values.deployment.celeryBeat.command }}
+        {{end}}
+        imagePullPolicy: {{.Values.imagePullPolicy | quote}}

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-high-worker-deployment
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+  labels:
+    app: celery-high-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-high-worker
+  template:
+    metadata:
+      labels:
+        app: celery-high-worker
+    spec:
+      containers:
+      - name: celery-high-worker
+        image: {{.Values.deployment.celeryHighWorker.image}}:{{.Values.deployment.celeryHighWorker.version}}
+        {{if .Values.deployment.celeryHighWorker.command}}
+        command: {{.Values.deployment.celeryHighWorker.command }}
+        {{end}}
+        imagePullPolicy: {{.Values.imagePullPolicy | quote}}
+        

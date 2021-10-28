@@ -1,0 +1,39 @@
+# Require to Label Node using
+# kubectl label nodes <node-name> <label-key>=<label-value>
+apiVersion: v1
+kind: Service
+metadata:
+  name: sap-connector-service
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+spec:
+  selector:
+    app: sap-connector
+  ports:
+    - protocol: TCP
+      port: 3200
+      targetPort: 8000
+  clusterIP: None
+--- 
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sap-connector-deployment
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+spec:
+  nodeSelector:
+    {{.Values.deployment.sapConnector.nodeKey}}: {{.Values.deployment.sapConnector.nodeValue}}
+  selector:
+    matchLabels:
+      app: sap-connector
+  replicas: 1 
+  template:
+    metadata:
+      labels:
+        app: sap-connector
+    spec:
+      containers:
+      - name: sap-connector
+        image: {{.Values.deployment.sapConnector.image}}:{{.Values.deployment.sapConnector.version}}
+        imagePullPolicy: {{.Values.imagePullPolicy | quote}}
+        ports:
+        - containerPort: 8000

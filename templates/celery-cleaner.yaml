@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-cleaner-worker-deployment
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+  labels:
+    app: celery-cleaner-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: celery-cleaner-worker
+  template:
+    metadata:
+      labels:
+        app: celery-cleaner-worker
+    spec:
+      containers:
+      - name: celery-cleaner-worker
+        image: {{.Values.deployment.celeryCleaner.image }}:{{.Values.deployment.celeryCleaner.version }}
+        {{if .Values.deployment.celeryCleaner.command}}
+        command: {{.Values.deployment.celeryCleaner.command }}
+        {{ end }}
+        imagePullPolicy: {{.Values.imagePullPolicy | quote}}

@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv-volume
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+  labels:
+    type: local
+spec:
+  
+  {{- with .Values.deployment.mysql.PersistentVolume}}
+  {{if .storageClassName}}
+  # takes default storage class if not specifed, Make Sure you select default storage class
+  storageClassName: {{.storageClassName}}
+  {{end}}
+  capacity:
+    storage: {{.storage}}
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: {{.path}}
+  {{- end }}
+  
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pv-claim
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+spec:
+  
+  {{- with .Values.deployment.mysql.PersistentVolumeClaim}}
+  {{if .storageClassName}}
+  # takes default storage class if not specifed, Make Sure you select default storage class
+  storageClassName: {{.storageClassName}}
+  {{end}}
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{.storage}}
+  {{- end}}
+  
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret-password
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+type: Opaque
+stringData:
+    password: {{.Values.deployment.mysql.password  | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: {{.Values.namespace | default "atronas-app" | quote }}
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: {{.Values.deployment.mysql.image}}:{{.Values.deployment.mysql.version}}
+        imagePullPolicy: {{.Values.imagePullPolicy | quote}}
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom: 
+            secretKeyRef: 
+              name: mysql-secret-password
+              key: password
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
